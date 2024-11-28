@@ -57,21 +57,22 @@
         const player2Img = new Image();
         player2Img.src = '2.png';
 
-        function drawArena() {
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 8;
-            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+function drawArena() {
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 8;
+    ctx.strokeRect(0, 0, canvas.width, canvas.height);
 
-            // Draw the center line
-            ctx.beginPath();
-            ctx.moveTo(canvas.width / 2, 0);
-            ctx.lineTo(canvas.width / 2, canvas.height);
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 4;
-            ctx.stroke();
-        }
+    // Draw the horizontal center line
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height / 2); // Start at the left side, middle of the canvas
+    ctx.lineTo(canvas.width, canvas.height / 2); // Draw to the right side, middle of the canvas
+    ctx.strokeStyle = "pink";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+}
+
 
         function drawPaddle(x, y, img) {
             const paddleWidth = 50; // Adjust width
