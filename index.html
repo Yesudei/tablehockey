@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glow Hockey</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+            background-color: white;
+            border: 5px solid black;
+            box-shadow: 0 0 20px 10px rgba(255, 0, 255, 0.6);
+        }
+        #score {
+            position: absolute;
+            top: 50%;
+            left: -130px; /* Change this to `right: 10px` to move it to the right side */
+            transform: translateY(-50%) rotate(-90deg);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px; /* Smaller font size */
+            color: black;
+            text-shadow: 0px 0px 5px rgba(255, 255, 255, 0.9);
+            letter-spacing: 2px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="score">Player 1: 0 - Player 2: 0</div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const ballRadius = 20;
+        const paddleRadius = 50;
+
+        let player1 = { x: canvas.width / 2, y: paddleRadius, dx: 0, dy: 0 };
+        let player2 = { x: canvas.width / 2, y: canvas.height - paddleRadius, dx: 0, dy: 0 };
+        let ball = { x: canvas.width / 2, y: canvas.height / 2, dx: 0, dy: 0 };
+
+        let player1Score = 0;
+        let player2Score = 0;
+
+        const player1Img = new Image();
+        player1Img.src = '1.png';
+
+        const player2Img = new Image();
+        player2Img.src = '2.png';
+
+        function drawArena() {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 8;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the center line
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+
+        function drawPaddle(x, y, img) {
+            const paddleWidth = 50; // Adjust width
+            const paddleHeight = 50; // Adjust height
+            ctx.drawImage(img, x - paddleWidth / 2, y - paddleHeight / 2, paddleWidth, paddleHeight);
+        }
+
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "black";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function updateBall() {
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            if (ball.y - ballRadius <= 0) {
+                player2Score++;
+                resetBall();
+            }
+
+            if (ball.y + ballRadius >= canvas.height) {
+                player1Score++;
+                resetBall();
+            }
+
+            if (ball.x - ballRadius <= 0 || ball.x + ballRadius >= canvas.width) {
+                ball.dx = -ball.dx * 0.95;
+            }
+
+            function checkCollision(player) {
+                const dx = ball.x - player.x;
+                const dy = ball.y - player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance <= paddleRadius + ballRadius) {
+                    const angle = Math.atan2(dy, dx);
+                    const reflectedAngle = Math.PI - angle;
+
+                    ball.dx = Math.cos(reflectedAngle) * 5;
+                    ball.dy = Math.sin(reflectedAngle) * 5;
+                }
+            }
+
+            checkCollision(player1);
+            checkCollision(player2);
+        }
+
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.dx = 0;
+            ball.dy = 0;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawArena();
+            drawPaddle(player1.x, player1.y, player1Img);
+            drawPaddle(player2.x, player2.y, player2Img);
+            drawBall();
+
+            // Update score text
+            document.getElementById('score').innerText = `Player 1: ${player1Score} - Player 2: ${player2Score}`;
+        }
+
+        function update() {
+            updateBall();
+        }
+
+        function gameLoop() {
+            draw();
+            update();
+            requestAnimationFrame(gameLoop);
+        }
+
+        const keys = {};
+
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        function updatePlayers() {
+            if (keys['w']) player1.y -= 5;
+            if (keys['s']) player1.y += 5;
+            if (keys['a']) player1.x -= 5;
+            if (keys['d']) player1.x += 5;
+
+            if (keys['ArrowUp']) player2.y -= 5;
+            if (keys['ArrowDown']) player2.y += 5;
+            if (keys['ArrowLeft']) player2.x -= 5;
+            if (keys['ArrowRight']) player2.x += 5;
+
+            player1.x = Math.max(paddleRadius, Math.min(canvas.width - paddleRadius, player1.x));
+            player1.y = Math.max(paddleRadius, Math.min(canvas.height - paddleRadius, player1.y));
+            player2.x = Math.max(paddleRadius, Math.min(canvas.width - paddleRadius, player2.x));
+            player2.y = Math.max(paddleRadius, Math.min(canvas.height - paddleRadius, player2.y));
+        }
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        window.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+
+            if (touchX < canvas.width / 2) {
+                player1.x = touchX;
+                player1.y = touchY;
+            } else {
+                player2.x = touchX;
+                player2.y = touchY;
+            }
+
+            e.preventDefault();
+        });
+
+        function updateGame() {
+            update();
+            updatePlayers();
+        }
+
+        setInterval(updateGame, 16);
+
+        gameLoop();
+    </script>
+</body>
+</html>
